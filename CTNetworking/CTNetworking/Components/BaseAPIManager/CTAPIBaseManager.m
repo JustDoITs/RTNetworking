@@ -11,27 +11,22 @@
 #import "CTCache.h"
 #import "CTLogger.h"
 #import "CTServiceFactory.h"
-#import "CTAppContext.h"
 #import "CTApiProxy.h"
+#import "CTNetworkingConfigurationManager.h"
 
 #define AXCallAPI(REQUEST_METHOD, REQUEST_ID)                                                   \
 {                                                                                               \
     __weak typeof(self) weakSelf = self;                                                        \
-    REQUEST_ID = [[CTApiProxy sharedInstance] call##REQUEST_METHOD##WithParams:apiParams serviceIdentifier:self.child.serviceType methodName:self.child.methodName success:^(CTURLResponse *response) { \
+    REQUEST_ID = [[CTApiProxy sharedInstance] call##REQUEST_METHOD##WithParams:apiParams serviceIdentifier:self.child.serviceType methodName:self.child.methodName success:^(CTURLResponse *response) {                                         \
         __strong typeof(weakSelf) strongSelf = weakSelf;                                        \
         [strongSelf successedOnCallingAPI:response];                                            \
-    } fail:^(CTURLResponse *response) {                                                        \
+    } fail:^(CTURLResponse *response) {                                                         \
         __strong typeof(weakSelf) strongSelf = weakSelf;                                        \
         [strongSelf failedOnCallingAPI:response withErrorType:CTAPIManagerErrorTypeDefault];    \
     }];                                                                                         \
-    [self.requestIdList addObject:@(REQUEST_ID)];                                               \
+    [self.requestIdList addObject:@(REQUEST_ID)];                                                   \
 }
 
-NSString * const kBSUserTokenInvalidNotification = @"kBSUserTokenInvalidNotification";
-NSString * const kBSUserTokenIllegalNotification = @"kBSUserTokenIllegalNotification";
-
-NSString * const kBSUserTokenNotificationUserInfoKeyRequestToContinue = @"kBSUserTokenNotificationUserInfoKeyRequestToContinue";
-NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUserTokenNotificationUserInfoKeyManagerToContinue";
 
 
 @interface CTAPIBaseManager ()
@@ -66,7 +61,8 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
         if ([self conformsToProtocol:@protocol(CTAPIManager)]) {
             self.child = (id <CTAPIManager>)self;
         } else {
-            NSException *exception = [[NSException alloc] init];
+            self.child = (id <CTAPIManager>)self;
+            NSException *exception = [[NSException alloc] initWithName:@"CTAPIBaseManager提示" reason:[NSString stringWithFormat:@"%@没有遵循CTAPIManager协议",self.child] userInfo:nil];
             @throw exception;
         }
     }
@@ -118,7 +114,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
     if ([self shouldCallAPIWithParams:apiParams]) {
         if ([self.validator manager:self isCorrectWithParamsData:apiParams]) {
             
-            if ([self shouldLoadFromNative]) {
+            if ([self.child shouldLoadFromNative]) {
                 [self loadDataFromNative];
             }
             
@@ -130,29 +126,29 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
             // 实际的网络请求
             if ([self isReachable]) {
                 self.isLoading = YES;
-                    switch (self.child.requestType)
-                    {
-                        case CTAPIManagerRequestTypeGet:
-                            AXCallAPI(GET, requestId);
-                            break;
-                        case CTAPIManagerRequestTypePost:
-                            AXCallAPI(POST, requestId);
-                            break;
-                        case CTAPIManagerRequestTypePut:
-                            AXCallAPI(PUT, requestId);
-                            break;
-                        case CTAPIManagerRequestTypeDelete:
-                            AXCallAPI(DELETE, requestId);
+                switch (self.child.requestType)
+                {
+                    case CTAPIManagerRequestTypeGet:
+                        AXCallAPI(GET, requestId);
                         break;
-                        default:
-                            break;
-                    }
-            
+                    case CTAPIManagerRequestTypePost:
+                        AXCallAPI(POST, requestId);
+                        break;
+                    case CTAPIManagerRequestTypePut:
+                        AXCallAPI(PUT, requestId);
+                        break;
+                    case CTAPIManagerRequestTypeDelete:
+                        AXCallAPI(DELETE, requestId);
+                        break;
+                    default:
+                        break;
+                }
+                
                 NSMutableDictionary *params = [apiParams mutableCopy];
                 params[kCTAPIBaseManagerRequestID] = @(requestId);
                 [self afterCallingAPIWithParams:params];
                 return requestId;
-            
+                
             } else {
                 [self failedOnCallingAPI:nil withErrorType:CTAPIManagerErrorTypeNoNetWork];
                 return requestId;
@@ -171,10 +167,9 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
     self.isLoading = NO;
     self.response = response;
     
-    if ([self shouldLoadFromNative]) {
+    if ([self.child shouldLoadFromNative]) {
         if (response.isCache == NO) {
             [[NSUserDefaults standardUserDefaults] setObject:response.responseData forKey:[self.child methodName]];
-            [[NSUserDefaults standardUserDefaults] synchronize];
         }
     }
     
@@ -191,7 +186,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
         }
         
         if ([self beforePerformSuccessWithResponse:response]) {
-            if ([self shouldLoadFromNative]) {
+            if ([self.child shouldLoadFromNative]) {
                 if (response.isCache == YES) {
                     [self.delegate managerCallAPIDidSuccess:self];
                 }
@@ -210,61 +205,62 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 
 - (void)failedOnCallingAPI:(CTURLResponse *)response withErrorType:(CTAPIManagerErrorType)errorType
 {
+    NSString *serviceIdentifier = self.child.serviceType;
+    CTService *service = [[CTServiceFactory sharedInstance] serviceWithIdentifier:serviceIdentifier];
+    
     self.isLoading = NO;
     self.response = response;
-    if ([response.content[@"id"] isEqualToString:@"expired_access_token"]) {
-        // token 失效
-        [[NSNotificationCenter defaultCenter] postNotificationName:kBSUserTokenInvalidNotification
-                                                            object:nil
-                                                          userInfo:@{
-                                                                     kBSUserTokenNotificationUserInfoKeyRequestToContinue:[response.request mutableCopy],
-                                                                     kBSUserTokenNotificationUserInfoKeyManagerToContinue:self
-                                                                     }];
-    } else if ([response.content[@"id"] isEqualToString:@"illegal_access_token"]) {
-        // token 无效，重新登录
-        [[NSNotificationCenter defaultCenter] postNotificationName:kBSUserTokenIllegalNotification
-                                                            object:nil
-                                                          userInfo:@{
-                                                                     kBSUserTokenNotificationUserInfoKeyRequestToContinue:[response.request mutableCopy],
-                                                                     kBSUserTokenNotificationUserInfoKeyManagerToContinue:self
-                                                                     }];
-    } else if ([response.content[@"id"] isEqualToString:@"no_permission_for_this_api"]) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kBSUserTokenIllegalNotification
-                                                            object:nil
-                                                          userInfo:@{
-                                                                     kBSUserTokenNotificationUserInfoKeyRequestToContinue:[response.request mutableCopy],
-                                                                     kBSUserTokenNotificationUserInfoKeyManagerToContinue:self
-                                                                     }];
-    } else {
-        // 其他错误
-        self.errorType = errorType;
-        [self removeRequestIdWithRequestID:response.requestId];
-        if ([self beforePerformFailWithResponse:response]) {
-            [self.delegate managerCallAPIDidFailed:self];
-        }
-        [self afterPerformFailWithResponse:response];
+    BOOL needCallBack = YES;
+    
+    if ([service.child respondsToSelector:@selector(shouldCallBackByFailedOnCallingAPI:)]) {
+        needCallBack = [service.child shouldCallBackByFailedOnCallingAPI:response];
     }
+    
+    //由service决定是否结束回调
+    if (!needCallBack) {
+        return;
+    }
+    
+    //继续错误的处理
+    self.errorType = errorType;
+    [self removeRequestIdWithRequestID:response.requestId];
+    
+    if (response.content) {
+        self.fetchedRawData = [response.content copy];
+    } else {
+        self.fetchedRawData = [response.responseData copy];
+    }
+    
+    if ([self beforePerformFailWithResponse:response]) {
+        [self.delegate managerCallAPIDidFailed:self];
+    }
+    [self afterPerformFailWithResponse:response];
 }
+
+
+
+
+
 
 #pragma mark - method for interceptor
 
 /*
-    拦截器的功能可以由子类通过继承实现，也可以由其它对象实现,两种做法可以共存
-    当两种情况共存的时候，子类重载的方法一定要调用一下super
-    然后它们的调用顺序是BaseManager会先调用子类重载的实现，再调用外部interceptor的实现
-    
-    notes:
-        正常情况下，拦截器是通过代理的方式实现的，因此可以不需要以下这些代码
-        但是为了将来拓展方便，如果在调用拦截器之前manager又希望自己能够先做一些事情，所以这些方法还是需要能够被继承重载的
-        所有重载的方法，都要调用一下super,这样才能保证外部interceptor能够被调到
-        这就是decorate pattern
+ 拦截器的功能可以由子类通过继承实现，也可以由其它对象实现,两种做法可以共存
+ 当两种情况共存的时候，子类重载的方法一定要调用一下super
+ 然后它们的调用顺序是BaseManager会先调用子类重载的实现，再调用外部interceptor的实现
+ 
+ notes:
+ 正常情况下，拦截器是通过代理的方式实现的，因此可以不需要以下这些代码
+ 但是为了将来拓展方便，如果在调用拦截器之前manager又希望自己能够先做一些事情，所以这些方法还是需要能够被继承重载的
+ 所有重载的方法，都要调用一下super,这样才能保证外部interceptor能够被调到
+ 这就是decorate pattern
  */
 - (BOOL)beforePerformSuccessWithResponse:(CTURLResponse *)response
 {
     BOOL result = YES;
     
     self.errorType = CTAPIManagerErrorTypeSuccess;
-    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(beforePerformSuccessWithResponse:)]) {
+    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(manager: beforePerformSuccessWithResponse:)]) {
         result = [self.interceptor manager:self beforePerformSuccessWithResponse:response];
     }
     return result;
@@ -272,7 +268,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 
 - (void)afterPerformSuccessWithResponse:(CTURLResponse *)response
 {
-    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(afterPerformSuccessWithResponse:)]) {
+    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(manager:afterPerformSuccessWithResponse:)]) {
         [self.interceptor manager:self afterPerformSuccessWithResponse:response];
     }
 }
@@ -280,7 +276,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 - (BOOL)beforePerformFailWithResponse:(CTURLResponse *)response
 {
     BOOL result = YES;
-    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(beforePerformFailWithResponse:)]) {
+    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(manager:beforePerformFailWithResponse:)]) {
         result = [self.interceptor manager:self beforePerformFailWithResponse:response];
     }
     return result;
@@ -288,7 +284,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 
 - (void)afterPerformFailWithResponse:(CTURLResponse *)response
 {
-    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(afterPerformFailWithResponse:)]) {
+    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(manager:afterPerformFailWithResponse:)]) {
         [self.interceptor manager:self afterPerformFailWithResponse:response];
     }
 }
@@ -296,7 +292,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 //只有返回YES才会继续调用API
 - (BOOL)shouldCallAPIWithParams:(NSDictionary *)params
 {
-    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(shouldCallAPIWithParams:)]) {
+    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(manager:shouldCallAPIWithParams:)]) {
         return [self.interceptor manager:self shouldCallAPIWithParams:params];
     } else {
         return YES;
@@ -305,7 +301,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 
 - (void)afterCallingAPIWithParams:(NSDictionary *)params
 {
-    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(afterCallingAPIWithParams:)]) {
+    if (self != self.interceptor && [self.interceptor respondsToSelector:@selector(manager:afterCallingAPIWithParams:)]) {
         [self.interceptor manager:self afterCallingAPIWithParams:params];
     }
 }
@@ -343,7 +339,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 
 - (BOOL)shouldCache
 {
-    return kCTShouldCache;
+    return [CTNetworkingConfigurationManager sharedInstance].shouldCache;
 }
 
 #pragma mark - private methods
@@ -383,9 +379,8 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 
 - (void)loadDataFromNative
 {
-    NSString *methodName = self.child.methodName;
-    NSDictionary *result = (NSDictionary *)[[NSUserDefaults standardUserDefaults] objectForKey:methodName];
-    
+    NSDictionary *result = [NSJSONSerialization JSONObjectWithData:[[NSUserDefaults standardUserDefaults] dataForKey:self.child.methodName] options:0 error:NULL];
+
     if (result) {
         self.isNativeDataEmpty = NO;
         __weak typeof(self) weakSelf = self;
@@ -418,7 +413,7 @@ NSString * const kBSUserTokenNotificationUserInfoKeyManagerToContinue = @"kBSUse
 
 - (BOOL)isReachable
 {
-    BOOL isReachability = [CTAppContext sharedInstance].isReachable;
+    BOOL isReachability = [CTNetworkingConfigurationManager sharedInstance].isReachable;
     if (!isReachability) {
         self.errorType = CTAPIManagerErrorTypeNoNetWork;
     }

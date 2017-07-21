@@ -7,7 +7,13 @@
 //
 
 #import "CTService.h"
-#import "NSObject+AXNetworkingMethods.h"
+#import "NSObject+CTNetworkingMethods.h"
+
+@interface CTService()
+
+@property (nonatomic, weak, readwrite) id<CTServiceProtocol> child;
+
+@end
 
 @implementation CTService
 
@@ -15,12 +21,23 @@
 {
     self = [super init];
     if (self) {
-        if ([self conformsToProtocol:@protocol(CTServiceProtocal)]) {
-            self.child = (id<CTServiceProtocal>)self;
+        if ([self conformsToProtocol:@protocol(CTServiceProtocol)]) {
+            self.child = (id<CTServiceProtocol>)self;
         }
     }
     return self;
 }
+
+- (NSString *)urlGeneratingRuleByMethodName:(NSString *)methodName {
+    NSString *urlString = nil;
+    if (self.apiVersion.length != 0) {
+        urlString = [NSString stringWithFormat:@"%@/%@/%@", self.apiBaseUrl, self.apiVersion, methodName];
+    } else {
+        urlString = [NSString stringWithFormat:@"%@/%@", self.apiBaseUrl, methodName];
+    }
+    return urlString;
+}
+
 
 #pragma mark - getters and setters
 - (NSString *)privateKey

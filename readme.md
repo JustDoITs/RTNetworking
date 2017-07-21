@@ -1,5 +1,7 @@
 # CTNetworking
 
+[![Join the chat at https://gitter.im/casatwy/RTNetworking](https://badges.gitter.im/casatwy/RTNetworking.svg)](https://gitter.im/casatwy/RTNetworking?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 `CTNetworking` is an iOS discrete HTTP API calling framework based on AFNetworking.[Click for more detail(in Chinese)](http://casatwy.com/iosying-yong-jia-gou-tan-wang-luo-ceng-she-ji-fang-an.html)
 
 ## Requirements
@@ -30,13 +32,13 @@ CTNetworking API URL is constituted by 4 part:
 
 #### Custom a CTService
 
-Inherit `CTService` and follow `CTServiceProtocal`
+Inherit `CTService` and follow `CTServiceProtocol`
 
 ```objective-c
-@interface GDMapService : CTService <CTServiceProtocal>
+@interface GDMapService : CTService <CTServiceProtocol>
 ```
 
-Implement all methods of `CTServiceProtocal`
+Implement all methods of `CTServiceProtocol`
 
 ```objective-c
 ...
