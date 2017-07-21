@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0CAA8B4B1F22063C00B2E176 /* NSString+JXCExt.m in Sources */ = {isa = PBXBuildFile; fileRef = 0CAA8B4A1F22063C00B2E176 /* NSString+JXCExt.m */; };
 		118172816A888E8150338AE0 /* libPods-CTNetworking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A7E991CD00AE580099C56CF4 /* libPods-CTNetworking.a */; };
 		7518BE5A1E9E321C00322FD6 /* LGBaseAPICommand.m in Sources */ = {isa = PBXBuildFile; fileRef = 7518BE591E9E321C00322FD6 /* LGBaseAPICommand.m */; };
 		75DEBEDF1E9B5EFC000046DC /* CTHTTPConst.m in Sources */ = {isa = PBXBuildFile; fileRef = 75DEBEDE1E9B5EFC000046DC /* CTHTTPConst.m */; };
@@ -46,6 +47,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0CAA8B491F22063C00B2E176 /* NSString+JXCExt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+JXCExt.h"; sourceTree = "<group>"; };
+		0CAA8B4A1F22063C00B2E176 /* NSString+JXCExt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+JXCExt.m"; sourceTree = "<group>"; };
 		47AEE7F0CEEB2B4E104FE886 /* Pods-CTNetworking.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CTNetworking.debug.xcconfig"; path = "Pods/Target Support Files/Pods-CTNetworking/Pods-CTNetworking.debug.xcconfig"; sourceTree = "<group>"; };
 		4ADD3645D6296652217469EC /* Pods-CTNetworking.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CTNetworking.release.xcconfig"; path = "Pods/Target Support Files/Pods-CTNetworking/Pods-CTNetworking.release.xcconfig"; sourceTree = "<group>"; };
 		7518BE581E9E321C00322FD6 /* LGBaseAPICommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LGBaseAPICommand.h; sourceTree = "<group>"; };
@@ -131,6 +134,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0CAA8B481F2205FB00B2E176 /* Ext */ = {
+			isa = PBXGroup;
+			children = (
+				0CAA8B491F22063C00B2E176 /* NSString+JXCExt.h */,
+				0CAA8B4A1F22063C00B2E176 /* NSString+JXCExt.m */,
+			);
+			name = Ext;
+			path = utils;
+			sourceTree = "<group>";
+		};
 		10E07CAF82B370B10DAEF89B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -214,6 +227,7 @@
 		ABC677FA1CF7109400B520A6 /* Demo */ = {
 			isa = PBXGroup;
 			children = (
+				0CAA8B481F2205FB00B2E176 /* Ext */,
 				75DEBEDD1E9B5EFC000046DC /* CTHTTPConst.h */,
 				75DEBEDE1E9B5EFC000046DC /* CTHTTPConst.m */,
 				ABC678881CF7271000B520A6 /* CTNetworkingCustoms */,
@@ -597,13 +611,16 @@
 			files = (
 			);
 			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
 			);
 			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-CTNetworking-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -622,6 +639,7 @@
 				7518BE5A1E9E321C00322FD6 /* LGBaseAPICommand.m in Sources */,
 				75DEBEDF1E9B5EFC000046DC /* CTHTTPConst.m in Sources */,
 				ABC678721CF7251400B520A6 /* NSMutableString+CTNetworkingMethods.m in Sources */,
+				0CAA8B4B1F22063C00B2E176 /* NSString+JXCExt.m in Sources */,
 				75DEBEEC1E9B68A2000046DC /* CTNetworkingConfigurationManager.m in Sources */,
 				ABC678851CF7251400B520A6 /* CTService.m in Sources */,
 				ABC678771CF7251400B520A6 /* CTApiProxy.m in Sources */,

@@ -52,11 +52,16 @@
     NSDictionary *params = @{};
     
     if (manager == self.testAPIManager) {
+//        params = @{
+//                   kTestAPIManagerParamsKeyLatitude:@(31.228000),
+//                   kTestAPIManagerParamsKeyLongitude:@(121.454290)
+//                   };
         params = @{
-                   kTestAPIManagerParamsKeyLatitude:@(31.228000),
-                   kTestAPIManagerParamsKeyLongitude:@(121.454290)
+                   kTestAPIManagerParamsKeyConditionPara:@"-----20-1"
                    };
     }
+    
+    NSLog(@"--- params %@",params);
     
     return params;
 }

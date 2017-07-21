@@ -10,6 +10,7 @@
 #import "CTHTTPConst.h"
 NSString * const kTestAPIManagerParamsKeyLatitude = @"kTestAPIManagerParamsKeyLatitude";
 NSString * const kTestAPIManagerParamsKeyLongitude = @"kTestAPIManagerParamsKeyLongitude";
+NSString * const kTestAPIManagerParamsKeyConditionPara = @"conditionPara";
 
 @interface TestAPIManager () <CTAPIManagerValidator>
 
@@ -30,7 +31,7 @@ NSString * const kTestAPIManagerParamsKeyLongitude = @"kTestAPIManagerParamsKeyL
 #pragma mark - CTAPIManager
 - (NSString *)methodName
 {
-    return @"geocode/regeo";
+    return @"site/courseList";
 }
 
 - (NSString *)serviceType
@@ -40,7 +41,7 @@ NSString * const kTestAPIManagerParamsKeyLongitude = @"kTestAPIManagerParamsKeyL
 
 - (CTAPIManagerRequestType)requestType
 {
-    return CTAPIManagerRequestTypeGet;
+    return CTAPIManagerRequestTypePost;
 }
 
 - (BOOL)shouldCache
@@ -51,9 +52,11 @@ NSString * const kTestAPIManagerParamsKeyLongitude = @"kTestAPIManagerParamsKeyL
 - (NSDictionary *)reformParams:(NSDictionary *)params
 {
     NSMutableDictionary *resultParams = [[NSMutableDictionary alloc] init];
-    resultParams[@"key"] = [[CTServiceFactory sharedInstance] serviceWithIdentifier:kCTServiceGDMapV3].publicKey;
-    resultParams[@"location"] = [NSString stringWithFormat:@"%@,%@", params[kTestAPIManagerParamsKeyLongitude], params[kTestAPIManagerParamsKeyLatitude]];
-    resultParams[@"output"] = @"json";
+    //resultParams[@"key"] = [[CTServiceFactory sharedInstance] serviceWithIdentifier:kCTServiceGDMapV3].publicKey;
+    //resultParams[@"location"] = [NSString stringWithFormat:@"%@,%@", params[kTestAPIManagerParamsKeyLongitude], params[kTestAPIManagerParamsKeyLatitude]];
+    //resultParams[@"conditionPara"] = @"-----20-1";
+    //NSLog(@"---- reformParams %@",params);
+    resultParams = [params mutableCopy];
     return resultParams;
 }
 

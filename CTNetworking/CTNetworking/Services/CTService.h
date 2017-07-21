@@ -32,7 +32,8 @@
 - (NSDictionary *)extraParmas;
 
 //为某些Service需要拼凑额外的HTTPToken，如accessToken
-- (NSDictionary *)extraHttpHeadParmasWithMethodName:(NSString *)method;
+//- (NSDictionary *)extraHttpHeadParmasWithMethodName:(NSString *)method;
+- (NSDictionary *)extraHttpHeadParmasWithMethodName:(NSDictionary *)parmas;
 
 - (NSString *)urlGeneratingRuleByMethodName:(NSString *)method;
 

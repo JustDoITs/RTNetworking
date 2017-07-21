@@ -10,6 +10,7 @@
 
 extern NSString * const kTestAPIManagerParamsKeyLatitude;
 extern NSString * const kTestAPIManagerParamsKeyLongitude;
+extern NSString * const kTestAPIManagerParamsKeyConditionPara;
 
 @interface TestAPIManager : CTAPIBaseManager <CTAPIManager>
 

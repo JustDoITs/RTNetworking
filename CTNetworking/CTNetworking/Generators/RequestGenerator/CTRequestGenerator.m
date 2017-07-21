@@ -55,7 +55,10 @@
     return [self generateRequestWithServiceIdentifier:serviceIdentifier requestParams:requestParams methodName:methodName requestWithMethod:@"DELETE"];
 }
 
-- (NSURLRequest *)generateRequestWithServiceIdentifier:(NSString *)serviceIdentifier requestParams:(NSDictionary *)requestParams methodName:(NSString *)methodName requestWithMethod:(NSString *)method {
+- (NSURLRequest *)generateRequestWithServiceIdentifier:(NSString *)serviceIdentifier
+                                         requestParams:(NSDictionary *)requestParams
+                                            methodName:(NSString *)methodName
+                                     requestWithMethod:(NSString *)method {
     CTService *service = [[CTServiceFactory sharedInstance] serviceWithIdentifier:serviceIdentifier];
     NSString *urlString = [service urlGeneratingRuleByMethodName:methodName];
     
@@ -68,7 +71,7 @@
     }
     
     if ([service.child respondsToSelector:@selector(extraHttpHeadParmasWithMethodName:)]) {
-        NSDictionary *dict = [service.child extraHttpHeadParmasWithMethodName:methodName];
+        NSDictionary *dict = [service.child extraHttpHeadParmasWithMethodName:requestParams];
         if (dict) {
             [dict enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
                 [request setValue:obj forHTTPHeaderField:key];
